@@ -7132,7 +7132,7 @@ begin
         Prod.vSeg := 0;
         Prod.vDesc := 0;
         Prod.vOutro := 0;
-        Prod.indTot := itNaoSomaTotalNFe;
+        Prod.indTot := 1;     // Compõe total da NF
 
         // Impostos (todos zerados)
         with Imposto do

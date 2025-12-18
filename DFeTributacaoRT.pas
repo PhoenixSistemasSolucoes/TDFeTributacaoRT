@@ -19,7 +19,13 @@ type
     FAliquotaIBSUF: Double;
     FAliquotaIBSMun: Double;
     FAliquotaCBS: Double;
-    FReducao: Double;
+
+    // Parâmetros de cálculo corrigidos
+    FBaseIBSCBS: Double;
+    FpRedAliqIBS: Double; // Percentual de REDUÇÃO DE ALÍQUOTA (não da base!)
+    FpDifIBS: Double; // Percentual de DIFERIMENTO (após cálculo do imposto)
+    FpRedAliqCBS: Double;
+    FpDifCBS: Double;
 
     // Imposto Seletivo
     FvBCIS: Double;
@@ -82,6 +88,19 @@ type
     // Método privado para calcular totais de todos os itens
     procedure CalcularTotais;
 
+    // Função para cálculo correto da base de IBS/CBS
+  public
+    class function BaseCBSIBS(const vProd, vServ, vFrete, vSeg, vOutro, vII, vDesc,
+                              vPIS, vCOFINS, vICMS, vICMSUFDest, vFCP, vFCPUFDest,
+                              vICMSMono, vISSQN: Double): Double; overload;
+
+    // Função simplificada - apenas retorna a base informada (OBRIGATÓRIO)
+    class function BaseCBSIBS(const ABaseInformada: Double): Double; overload;
+
+    // Função para cálculo do imposto com redução de alíquota e diferimento
+    class function CalcularImpostoRT(const BaseCalculo, pAliq, pRedAliq, pDif: Double;
+                                    var vImposto, vDiferimento: Double): Double;
+
   public
     constructor Create; deprecated 'Use class methods instead';
     destructor Destroy; override;
@@ -98,7 +117,19 @@ type
     class function AliquotaIBSUF(Value: Double): TDFeTributacaoRT;
     class function AliquotaIBSMun(Value: Double): TDFeTributacaoRT;
     class function AliquotaCBS(Value: Double): TDFeTributacaoRT;
-    class function Reducao(Value: Double): TDFeTributacaoRT;
+
+    // Novos métodos paramétricos CORRIGIDOS
+    class function BaseIBSCBS(Value: Double): TDFeTributacaoRT; // Base livre informada
+    class function ReducaoAliqIBS(Value: Double): TDFeTributacaoRT; // Redução de ALÍQUOTA IBS
+    class function DiferimentoIBS(Value: Double): TDFeTributacaoRT; // Diferimento IBS
+    class function ReducaoAliqCBS(Value: Double): TDFeTributacaoRT; // Redução de ALÍQUOTA CBS
+    class function DiferimentoCBS(Value: Double): TDFeTributacaoRT; // Diferimento CBS
+
+    // Método para cálculo automático da base (apenas quando solicitado)
+    class function CalcularBaseDoItem: TDFeTributacaoRT;
+
+    // Manter compatibilidade com método antigo (deprecated)
+    class function Reducao(Value: Double): TDFeTributacaoRT; deprecated 'Use ReducaoAliqIBS ou ReducaoAliqCBS';
 
     // Métodos para Imposto Seletivo
     class function ImpostoSeletivo(vBC, pIS, pISEspec: Double; uTrib: string; qTrib: Double): TDFeTributacaoRT;
@@ -169,7 +200,13 @@ begin
   FAliquotaIBSUF := 0;
   FAliquotaIBSMun := 0;
   FAliquotaCBS := 0;
-  FReducao := 0;
+
+  // Novos parâmetros corretos
+  FBaseIBSCBS := 0; // Base DEVE ser informada
+  FpRedAliqIBS := 0;
+  FpDifIBS := 0;
+  FpRedAliqCBS := 0;
+  FpDifCBS := 0;
 
   // Imposto Seletivo
   FvBCIS := 0;
@@ -274,10 +311,71 @@ begin
   Result.FAliquotaCBS := Value;
 end;
 
+class function TDFeTributacaoRT.BaseIBSCBS(Value: Double): TDFeTributacaoRT;
+begin
+  Result := Instance;
+  Result.FBaseIBSCBS := Value;
+end;
+
+class function TDFeTributacaoRT.ReducaoAliqIBS(Value: Double): TDFeTributacaoRT;
+begin
+  Result := Instance;
+  Result.FpRedAliqIBS := Value;
+end;
+
+class function TDFeTributacaoRT.DiferimentoIBS(Value: Double): TDFeTributacaoRT;
+begin
+  Result := Instance;
+  Result.FpDifIBS := Value;
+end;
+
+class function TDFeTributacaoRT.ReducaoAliqCBS(Value: Double): TDFeTributacaoRT;
+begin
+  Result := Instance;
+  Result.FpRedAliqCBS := Value;
+end;
+
+class function TDFeTributacaoRT.DiferimentoCBS(Value: Double): TDFeTributacaoRT;
+begin
+  Result := Instance;
+  Result.FpDifCBS := Value;
+end;
+
+class function TDFeTributacaoRT.CalcularBaseDoItem: TDFeTributacaoRT;
+var
+  Item: TDetCollectionItem;
+begin
+  Result := Instance;
+
+  // Obter o item atual
+  Item := Result.ObterItemAtual;
+
+  // Calcular base padrão do item (conforme manual UB05-UB10)
+  Result.FBaseIBSCBS := Result.BaseCBSIBS(
+    Item.Prod.vProd,           // vProd
+    0,                         // vServ (geralmente zero em produtos)
+    Item.Prod.vFrete,          // vFrete
+    Item.Prod.vSeg,            // vSeg
+    Item.Prod.vOutro,          // vOutro
+    0,                         // vII (imposto de importação)
+    Item.Prod.vDesc,           // vDesc
+    0,                         // vPIS
+    0,                         // vCOFINS
+    0,                         // vICMS
+    0,                         // vICMSUFDest
+    0,                         // vFCP
+    0,                         // vFCPUFDest
+    0,                         // vICMSMono
+    0                          // vISSQN
+  );
+end;
+
+// Manter compatibilidade
 class function TDFeTributacaoRT.Reducao(Value: Double): TDFeTributacaoRT;
 begin
   Result := Instance;
-  Result.FReducao := Value;
+  // Assume que é redução de IBS para compatibilidade
+  Result.FpRedAliqIBS := Value;
 end;
 
 class function TDFeTributacaoRT.ImpostoSeletivo(vBC, pIS, pISEspec: Double; uTrib: string; qTrib: Double): TDFeTributacaoRT;
@@ -355,11 +453,77 @@ begin
   Result := FACBr.NotasFiscais.Items[0].NFe.Det.Items[FACBr.NotasFiscais.Items[0].NFe.Det.Count - 1];
 end;
 
+class function TDFeTributacaoRT.BaseCBSIBS(const vProd, vServ, vFrete, vSeg, vOutro, vII, vDesc,
+                                          vPIS, vCOFINS, vICMS, vICMSUFDest, vFCP, vFCPUFDest,
+                                          vICMSMono, vISSQN: Double): Double;
+begin
+  // Cálculo da base de IBS/CBS conforme manual (UB05-UB10)
+  // vBC = vProd + vServ + vFrete + vSeg + vOutro + vII - vDesc - vPIS - vCOFINS
+  //       - vICMS - vICMSUFDest - vFCP - vFCPUFDest - vICMSMono - vISSQN
+
+  Result := vProd + vServ + vFrete + vSeg + vOutro + vII - vDesc
+           - vPIS - vCOFINS - vICMS - vICMSUFDest - vFCP - vFCPUFDest
+           - vICMSMono - vISSQN;
+
+  // Garantir valor não negativo
+  if Result < 0 then
+    Result := 0;
+end;
+
+class function TDFeTributacaoRT.BaseCBSIBS(const ABaseInformada: Double): Double;
+begin
+  // Função OBRIGATÓRIA - apenas retorna a base informada
+  // NÃO aplica redução
+  // NÃO aplica diferimento
+  // NÃO acessa valores do item
+  // Base permanece EXATAMENTE como foi informada
+
+  Result := ABaseInformada;
+
+  // Garantir valor não negativo
+  if Result < 0 then
+    Result := 0;
+end;
+
+class function TDFeTributacaoRT.CalcularImpostoRT(const BaseCalculo, pAliq, pRedAliq, pDif: Double;
+                                                  var vImposto, vDiferimento: Double): Double;
+var
+  pAliqEfetiva: Double;
+begin
+  // Passo 1: Calcular alíquota efetiva após redução
+  if pRedAliq > 0 then
+    pAliqEfetiva := pAliq * (1 - pRedAliq / 100)
+  else
+    pAliqEfetiva := pAliq;
+
+  // Passo 2: Calcular valor do imposto com alíquota efetiva
+  vImposto := BaseCalculo * pAliqEfetiva / 100;
+
+  // Passo 3: Aplicar diferimento
+  if pDif > 0 then
+  begin
+    vDiferimento := vImposto * pDif / 100;
+    Result := vImposto - vDiferimento;
+  end
+  else
+  begin
+    vDiferimento := 0;
+    Result := vImposto;
+  end;
+
+  // Arredondar valores
+  vImposto := RoundTo(vImposto, -2);
+  vDiferimento := RoundTo(vDiferimento, -2);
+  Result := RoundTo(Result, -2);
+end;
+
 class function TDFeTributacaoRT.Calcular: TDFeTributacaoRT;
 var
   Item: TDetCollectionItem;
-  vIBSUF, vIBSMun, vCBS: Double;
-  BaseIBSCBS: Double;
+  vIBSUF, vIBSMun, vCBS, vIBSUFFull, vIBSMunFull, vCBSFull: Double;
+  vDifIBSUF, vDifIBSMun, vDifCBS: Double;
+  vCalculoIBS, vCalculoCBS: Double;
+  BaseCalculo: Double;
   AnoEmissao: Integer;
 begin
   Result := Instance;
@@ -376,23 +540,57 @@ begin
      (Result.FCST = '400') or (Result.FCST = '410') or (Result.FCST = '500') then
     raise Exception.Create('CST ' + Result.FCST + ' não deve gerar IBS/CBS');
 
-  // Calcular base de cálculo
-  // vBC = vProd + vFrete + vSeg + vOutro - vDesc
-  BaseIBSCBS := Item.Prod.vProd + Item.Prod.vFrete + Item.Prod.vSeg +
-                Item.Prod.vOutro - Item.Prod.vDesc;
+  // VALIDAÇÃO OBRIGATÓRIA: Base DEVE ser informada
+  if Result.FBaseIBSCBS = 0 then
+    raise Exception.Create('Base de cálculo IBS/CBS não foi informada. Use .BaseIBSCBS(valor) ou .CalcularBaseDoItem()');
 
-  // Aplicar redução se houver
-  if Result.FReducao > 0 then
-    BaseIBSCBS := BaseIBSCBS * (1 - Result.FReducao / 100);
+  // Usar base informada (NÃO calcula automaticamente!)
+  BaseCalculo := Result.FBaseIBSCBS;
 
-  // Garantir valor não negativo
-  if BaseIBSCBS < 0 then
-    BaseIBSCBS := 0;
+  // Calcular IBS UF com redução e diferimento
+  if Result.FAliquotaIBSUF > 0 then
+  begin
+    vCalculoIBS := Result.CalcularImpostoRT(BaseCalculo, Result.FAliquotaIBSUF,
+                                            Result.FpRedAliqIBS, Result.FpDifIBS,
+                                            vIBSUFFull, vDifIBSUF);
+    vIBSUF := vCalculoIBS;
+  end
+  else
+  begin
+    vIBSUF := 0;
+    vDifIBSUF := 0;
+    vIBSUFFull := 0;
+  end;
 
-  // Calcular valores dos tributos
-  vIBSUF := BaseIBSCBS * Result.FAliquotaIBSUF / 100;
-  vIBSMun := BaseIBSCBS * Result.FAliquotaIBSMun / 100;
-  vCBS := BaseIBSCBS * Result.FAliquotaCBS / 100;
+  // Calcular IBS Municipal com redução e diferimento
+  if Result.FAliquotaIBSMun > 0 then
+  begin
+    vCalculoIBS := Result.CalcularImpostoRT(BaseCalculo, Result.FAliquotaIBSMun,
+                                            Result.FpRedAliqIBS, Result.FpDifIBS,
+                                            vIBSMunFull, vDifIBSMun);
+    vIBSMun := vCalculoIBS;
+  end
+  else
+  begin
+    vIBSMun := 0;
+    vDifIBSMun := 0;
+    vIBSMunFull := 0;
+  end;
+
+  // Calcular CBS com redução e diferimento
+  if Result.FAliquotaCBS > 0 then
+  begin
+    vCalculoCBS := Result.CalcularImpostoRT(BaseCalculo, Result.FAliquotaCBS,
+                                            Result.FpRedAliqCBS, Result.FpDifCBS,
+                                            vCBSFull, vDifCBS);
+    vCBS := vCalculoCBS;
+  end
+  else
+  begin
+    vCBS := 0;
+    vDifCBS := 0;
+    vCBSFull := 0;
+  end;
 
   // Ano da emissão para validar aplicação das regras
   AnoEmissao := YearOf(Result.FACBr.NotasFiscais.Items[0].NFe.Ide.dEmi);
@@ -414,48 +612,101 @@ begin
       gIBSCBS := TgIBSCBS.Create;
 
     // Preencher grupo de cálculo
-    gIBSCBS.vBC := RoundTo(BaseIBSCBS, -2);
+    gIBSCBS.vBC := RoundTo(BaseCalculo, -2);
 
-    // Preencher IBS UF
+    // Preencher IBS UF com grupos CORRETOS
     if Result.FAliquotaIBSUF > 0 then
     begin
       gIBSCBS.gIBSUF.pIBSUF := Result.FAliquotaIBSUF;
       gIBSCBS.gIBSUF.vIBSUF := RoundTo(vIBSUF, -2);
 
-      // Preencher grupos adicionais do IBS UF
-      gIBSCBS.gIBSUF.gDif.pDif := 0; // Implementar se necessário
-      gIBSCBS.gIBSUF.gDif.vDif := 0;
-      gIBSCBS.gIBSUF.gDevTrib.vDevTrib := 0;
-      gIBSCBS.gIBSUF.gRed.pRedAliq := 0;
-      gIBSCBS.gIBSUF.gRed.pAliqEfet := 0;
+      // Grupo gRed - Redução de Alíquota (SE HOUVER)
+      if Result.FpRedAliqIBS > 0 then
+      begin
+        gIBSCBS.gIBSUF.gRed.pRedAliq := Result.FpRedAliqIBS;
+        gIBSCBS.gIBSUF.gRed.pAliqEfet := Result.FAliquotaIBSUF * (1 - Result.FpRedAliqIBS / 100);
+      end
+      else
+      begin
+        gIBSCBS.gIBSUF.gRed.pRedAliq := 0;
+        gIBSCBS.gIBSUF.gRed.pAliqEfet := 0;
+      end;
+
+      // Grupo gDif - Diferimento (SE HOUVER)
+      if Result.FpDifIBS > 0 then
+      begin
+        gIBSCBS.gIBSUF.gDif.pDif := Result.FpDifIBS;
+        gIBSCBS.gIBSUF.gDif.vDif := RoundTo(vDifIBSUF, -2);
+        gIBSCBS.gIBSUF.gDevTrib.vDevTrib := RoundTo(vIBSUF, -2);
+      end
+      else
+      begin
+        gIBSCBS.gIBSUF.gDif.pDif := 0;
+        gIBSCBS.gIBSUF.gDif.vDif := 0;
+        gIBSCBS.gIBSUF.gDevTrib.vDevTrib := 0;
+      end;
     end;
 
-    // Preencher IBS Municipal
-    if Result.FAliquotaIBSMun > 0 then
-    begin
-      gIBSCBS.gIBSMun.pIBSMun := Result.FAliquotaIBSMun;
-      gIBSCBS.gIBSMun.vIBSMun := RoundTo(vIBSMun, -2);
+    // Preencher IBS Municipal com grupos CORRETOS (SEMPRE criar!)
+    // MESMO que alíquota seja zero, grupo deve existir
+    gIBSCBS.gIBSMun.pIBSMun := Result.FAliquotaIBSMun;
+    gIBSCBS.gIBSMun.vIBSMun := RoundTo(vIBSMun, -2);
 
-      // Preencher grupos adicionais do IBS Municipal
-      gIBSCBS.gIBSMun.gDif.pDif := 0; // Implementar se necessário
-      gIBSCBS.gIBSMun.gDif.vDif := 0;
-      gIBSCBS.gIBSMun.gDevTrib.vDevTrib := 0;
+    // Grupo gRed - Redução de Alíquota (SE HOUVER)
+    if Result.FpRedAliqIBS > 0 then
+    begin
+      gIBSCBS.gIBSMun.gRed.pRedAliq := Result.FpRedAliqIBS;
+      gIBSCBS.gIBSMun.gRed.pAliqEfet := Result.FAliquotaIBSMun * (1 - Result.FpRedAliqIBS / 100);
+    end
+    else
+    begin
       gIBSCBS.gIBSMun.gRed.pRedAliq := 0;
       gIBSCBS.gIBSMun.gRed.pAliqEfet := 0;
     end;
 
-    // Preencher CBS
-    if Result.FAliquotaCBS > 0 then
+    // Grupo gDif - Diferimento (SE HOUVER)
+    if Result.FpDifIBS > 0 then
     begin
-      gIBSCBS.gCBS.pCBS := Result.FAliquotaCBS;
-      gIBSCBS.gCBS.vCBS := RoundTo(vCBS, -2);
+      gIBSCBS.gIBSMun.gDif.pDif := Result.FpDifIBS;
+      gIBSCBS.gIBSMun.gDif.vDif := RoundTo(vDifIBSMun, -2);
+      gIBSCBS.gIBSMun.gDevTrib.vDevTrib := RoundTo(vIBSMun, -2);
+    end
+    else
+    begin
+      gIBSCBS.gIBSMun.gDif.pDif := 0;
+      gIBSCBS.gIBSMun.gDif.vDif := 0;
+      gIBSCBS.gIBSMun.gDevTrib.vDevTrib := 0;
+    end;
 
-      // Preencher grupos adicionais da CBS
-      gIBSCBS.gCBS.gDif.pDif := 0; // Implementar se necessário
-      gIBSCBS.gCBS.gDif.vDif := 0;
-      gIBSCBS.gCBS.gDevTrib.vDevTrib := 0;
+    // Preencher CBS com grupos CORRETOS (SEMPRE criar!)
+    // MESMO que alíquota seja zero, grupo deve existir
+    gIBSCBS.gCBS.pCBS := Result.FAliquotaCBS;
+    gIBSCBS.gCBS.vCBS := RoundTo(vCBS, -2);
+
+    // Grupo gRed - Redução de Alíquota (SE HOUVER)
+    if Result.FpRedAliqCBS > 0 then
+    begin
+      gIBSCBS.gCBS.gRed.pRedAliq := Result.FpRedAliqCBS;
+      gIBSCBS.gCBS.gRed.pAliqEfet := Result.FAliquotaCBS * (1 - Result.FpRedAliqCBS / 100);
+    end
+    else
+    begin
       gIBSCBS.gCBS.gRed.pRedAliq := 0;
       gIBSCBS.gCBS.gRed.pAliqEfet := 0;
+    end;
+
+    // Grupo gDif - Diferimento (SE HOUVER)
+    if Result.FpDifCBS > 0 then
+    begin
+      gIBSCBS.gCBS.gDif.pDif := Result.FpDifCBS;
+      gIBSCBS.gCBS.gDif.vDif := RoundTo(vDifCBS, -2);
+      gIBSCBS.gCBS.gDevTrib.vDevTrib := RoundTo(vCBS, -2);
+    end
+    else
+    begin
+      gIBSCBS.gCBS.gDif.pDif := 0;
+      gIBSCBS.gCBS.gDif.vDif := 0;
+      gIBSCBS.gCBS.gDevTrib.vDevTrib := 0;
     end;
 
     // Calcular vIBS total (soma de UF + Municipal)

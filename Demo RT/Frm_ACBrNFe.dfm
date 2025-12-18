@@ -2,7 +2,7 @@ object frmACBrNFe: TfrmACBrNFe
   Left = 252
   Top = 127
   Caption = 'ACBrNFe - Programa Exemplo'
-  ClientHeight = 612
+  ClientHeight = 739
   ClientWidth = 866
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -17,7 +17,7 @@ object frmACBrNFe: TfrmACBrNFe
     Left = 0
     Top = 0
     Width = 297
-    Height = 612
+    Height = 634
     Align = alLeft
     TabOrder = 0
     object PageControl1: TPageControl
@@ -34,7 +34,7 @@ object frmACBrNFe: TfrmACBrNFe
           Top = 0
           Width = 287
           Height = 525
-          ActivePage = TabSheet12
+          ActivePage = TabSheet13
           Align = alClient
           MultiLine = True
           TabOrder = 0
@@ -1628,7 +1628,7 @@ object frmACBrNFe: TfrmACBrNFe
     Left = 297
     Top = 0
     Width = 569
-    Height = 612
+    Height = 634
     Align = alClient
     TabOrder = 1
     object pgcBotoes: TPageControl
@@ -2230,7 +2230,7 @@ object frmACBrNFe: TfrmACBrNFe
       Left = 1
       Top = 238
       Width = 567
-      Height = 373
+      Height = 395
       ActivePage = Dados
       Align = alClient
       TabOrder = 1
@@ -2240,10 +2240,11 @@ object frmACBrNFe: TfrmACBrNFe
           Left = 0
           Top = 0
           Width = 559
-          Height = 345
+          Height = 367
           Align = alClient
           ScrollBars = ssVertical
           TabOrder = 0
+          ExplicitHeight = 345
         end
       end
       object TabSheet6: TTabSheet
@@ -2253,13 +2254,13 @@ object frmACBrNFe: TfrmACBrNFe
           Left = 0
           Top = 0
           Width = 559
-          Height = 345
+          Height = 367
           Align = alClient
           TabOrder = 0
           ExplicitWidth = 447
           ExplicitHeight = 276
           ControlData = {
-            4C000000C6390000A82300000000000000000000000000000000000000000000
+            4C000000C6390000EE2500000000000000000000000000000000000000000000
             000000004C000000000000000000000001000000E0D057007335CF11AE690800
             2B2E126200000000000000004C0000000114020000000000C000000000000046
             8000000000000000000000000000000000000000000000000000000000000000
@@ -2273,10 +2274,11 @@ object frmACBrNFe: TfrmACBrNFe
           Left = 0
           Top = 0
           Width = 559
-          Height = 345
+          Height = 367
           Align = alClient
           ScrollBars = ssVertical
           TabOrder = 0
+          ExplicitHeight = 345
         end
       end
       object TabSheet9: TTabSheet
@@ -2286,7 +2288,7 @@ object frmACBrNFe: TfrmACBrNFe
           Left = 0
           Top = 0
           Width = 559
-          Height = 345
+          Height = 367
           Align = alClient
           Indent = 19
           TabOrder = 0
@@ -2299,10 +2301,11 @@ object frmACBrNFe: TfrmACBrNFe
           Left = 0
           Top = 0
           Width = 559
-          Height = 345
+          Height = 367
           Align = alClient
           ScrollBars = ssVertical
           TabOrder = 0
+          ExplicitHeight = 345
         end
       end
       object Dados: TTabSheet
@@ -2312,7 +2315,7 @@ object frmACBrNFe: TfrmACBrNFe
           Left = 0
           Top = 0
           Width = 559
-          Height = 345
+          Height = 367
           Align = alClient
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -2349,6 +2352,76 @@ object frmACBrNFe: TfrmACBrNFe
         'N'#227'o')
       ParentFont = False
       TabOrder = 2
+    end
+  end
+  object Exemplos_Reforma_trib: TPanel
+    Left = 0
+    Top = 634
+    Width = 866
+    Height = 105
+    Align = alBottom
+    BevelOuter = bvLowered
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -13
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentBackground = False
+    ParentFont = False
+    TabOrder = 2
+    object btnRTNormal: TButton
+      Left = 10
+      Top = 25
+      Width = 215
+      Height = 25
+      Caption = 'NF Normal'
+      TabOrder = 0
+      OnClick = btnRTNormalClick
+    end
+    object btnRTReducao100: TButton
+      Left = 9
+      Top = 56
+      Width = 216
+      Height = 25
+      Caption = 'NF Redu'#231#227'o 100%'
+      TabOrder = 1
+      OnClick = btnRTReducao100Click
+    end
+    object btnRTDiferimentoTotal: TButton
+      Left = 231
+      Top = 25
+      Width = 197
+      Height = 25
+      Caption = 'NF Diferimento Total'
+      TabOrder = 2
+      OnClick = btnRTDiferimentoTotalClick
+    end
+    object btnRTJurosMulta: TButton
+      Left = 231
+      Top = 56
+      Width = 197
+      Height = 25
+      Caption = 'RT - Juros e Multa (515)'
+      TabOrder = 3
+      OnClick = btnRTJurosMultaClick
+    end
+    object btnRTComplementar: TButton
+      Left = 434
+      Top = 25
+      Width = 194
+      Height = 25
+      Caption = 'NF Complementar'
+      TabOrder = 4
+      OnClick = btnRTComplementarClick
+    end
+    object btnRTImportacao: TButton
+      Left = 634
+      Top = 25
+      Width = 227
+      Height = 25
+      Caption = 'NF Importa'#231#227'o'
+      TabOrder = 5
+      OnClick = btnRTImportacaoClick
     end
   end
   object ACBrNFe1: TACBrNFe
